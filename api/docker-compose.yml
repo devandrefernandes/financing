@@ -1,0 +1,51 @@
+version: "3.7"
+services:
+  app:
+    build:
+      args:
+        user: sammy
+        uid: 1000
+      context: ./
+      dockerfile: Dockerfile
+    image: financing
+    container_name: financing-app
+    restart: unless-stopped
+    working_dir: /var/www/
+    volumes:
+      - ./:/var/www
+    networks:
+      - financing
+
+  db:
+    image: mysql:5.7
+    container_name: financing-db
+    restart: unless-stopped
+    environment:
+      MYSQL_DATABASE: financing
+      MYSQL_ROOT_PASSWORD: financing_pass
+      MYSQL_PASSWORD: financing_pass
+      MYSQL_USER: financing_user
+      SERVICE_TAGS: dev
+      SERVICE_NAME: mysql
+    volumes:
+      - ./docker-compose/mysql:/docker-entrypoint-initdb.d
+    networks:
+      - financing
+    ports:
+      - "9005:3306"
+
+  nginx:
+    image: nginx:alpine
+    container_name: financing-nginx
+    restart: unless-stopped
+    ports:
+      - 8000:80
+    volumes:
+      - ./:/var/www
+      - ./docker-compose/nginx:/etc/nginx/conf.d/
+    networks:
+      - financing
+
+networks:
+  financing:
+    driver: bridge
